@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Layer Diagnostic Test</title>
+    <style>
+        body {
+            margin: 0;
+            background: #000;
+            color: #00ffff;
+            font-family: 'Courier New', monospace;
+            padding: 20px;
+        }
+        
+        .diagnostic-panel {
+            background: rgba(0, 0, 0, 0.8);
+            border: 2px solid #00ffff;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .layer-test {
+            background: rgba(25, 25, 25, 0.9);
+            border: 1px solid #333;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+        }
+        
+        .success { border-color: #00ff00; color: #00ff00; }
+        .fail { border-color: #ff0000; color: #ff0000; }
+        .warning { border-color: #ffff00; color: #ffff00; }
+        
+        .test-container {
+            position: relative;
+            width: 300px;
+            height: 200px;
+            border: 2px solid #00ffff;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="diagnostic-panel">
+        <h1>🔍 ADVANCED SYSTEM LAYER DIAGNOSTIC</h1>
+        <div id="diagnosticResults"></div>
+        
+        <div class="test-container" id="testContainer">
+            <!-- Test rendering here -->
+        </div>
+        
+        <button onclick="runDiagnostic()" style="background: #00ffff; color: #000; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer;">
+            RUN FULL DIAGNOSTIC
+        </button>
+    </div>
+
+    <script type="module">
+        import { AdvancedHolographicVisualizer } from './src/core/AdvancedHolographicVisualizer.js';
+        
+        window.runDiagnostic = async function() {
+            const results = document.getElementById('diagnosticResults');
+            results.innerHTML = '<h2>🧪 RUNNING DIAGNOSTIC...</h2>';
+            
+            const container = document.getElementById('testContainer');
+            
+            try {
+                console.log('📊 Creating test visualizer...');
+                const testViz = new AdvancedHolographicVisualizer(container, 0);
+                
+                // Wait a moment for initialization
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                
+                let report = '<h2>📊 DIAGNOSTIC RESULTS</h2>';
+                
+                // Check layers configuration
+                report += `<div class="layer-test success">
+                    ✅ LAYER CONFIG: ${testViz.layers.length} layers configured
+                </div>`;
+                
+                // Check canvases created
+                const canvasCount = Object.keys(testViz.canvases).length;
+                report += `<div class="layer-test ${canvasCount === 8 ? 'success' : 'warning'}">
+                    ${canvasCount === 8 ? '✅' : '⚠️'} CANVASES: ${canvasCount}/8 created
+                </div>`;
+                
+                // Check WebGL contexts
+                const contextCount = Object.keys(testViz.contexts).length;
+                report += `<div class="layer-test ${contextCount === 8 ? 'success' : 'fail'}">
+                    ${contextCount === 8 ? '✅' : '❌'} WEBGL CONTEXTS: ${contextCount}/8 active
+                </div>`;
+                
+                // Check individual contexts
+                report += '<h3>🔍 INDIVIDUAL LAYER STATUS:</h3>';
+                testViz.layers.forEach((layer, index) => {
+                    const hasCanvas = testViz.canvases[layer.name] ? true : false;
+                    const hasContext = testViz.contexts[layer.name] ? true : false;
+                    const hasProgram = hasContext && testViz.contexts[layer.name].program ? true : false;
+                    
+                    const status = hasProgram ? 'success' : (hasContext ? 'warning' : 'fail');
+                    const icon = hasProgram ? '✅' : (hasContext ? '⚠️' : '❌');
+                    
+                    report += `<div class="layer-test ${status}">
+                        ${icon} Layer ${index + 1} (${layer.name}): 
+                        Canvas=${hasCanvas} | WebGL=${hasContext} | Shader=${hasProgram}
+                    </div>`;
+                });
+                
+                // Check browser WebGL limits
+                const testGl = document.createElement('canvas').getContext('webgl');
+                if (testGl) {
+                    const maxTextures = testGl.getParameter(testGl.MAX_TEXTURE_IMAGE_UNITS);
+                    const maxVertexTextures = testGl.getParameter(testGl.MAX_VERTEX_TEXTURE_IMAGE_UNITS);
+                    const maxCombinedTextures = testGl.getParameter(testGl.MAX_COMBINED_TEXTURE_IMAGE_UNITS);
+                    
+                    report += '<h3>🔧 BROWSER WEBGL LIMITS:</h3>';
+                    report += `<div class="layer-test success">
+                        📊 Max Texture Units: ${maxTextures}<br>
+                        📊 Max Vertex Textures: ${maxVertexTextures}<br>
+                        📊 Max Combined Textures: ${maxCombinedTextures}
+                    </div>`;
+                }
+                
+                // Final assessment
+                if (contextCount < 8) {
+                    report += `<div class="layer-test fail">
+                        🚨 CRITICAL: Only ${contextCount} layers are actually rendering!<br>
+                        This explains why you see mandala patterns instead of complex holograms.
+                    </div>`;
+                } else {
+                    report += `<div class="layer-test success">
+                        ✅ All 8 layers are active and rendering.
+                    </div>`;
+                }
+                
+                results.innerHTML = report;
+                
+            } catch (error) {
+                results.innerHTML = `<div class="layer-test fail">
+                    ❌ DIAGNOSTIC FAILED: ${error.message}
+                </div>`;
+                console.error('Diagnostic error:', error);
+            }
+        };
+        
+        // Auto-run diagnostic on load
+        window.addEventListener('load', () => {
+            setTimeout(runDiagnostic, 500);
+        });
+    </script>
+</body>
+</html>
