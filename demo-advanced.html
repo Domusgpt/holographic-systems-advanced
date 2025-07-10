@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced Holographic Systems - 10-Layer Multi-Geometry</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap');
+        
+        body {
+            margin: 0;
+            background: #000;
+            overflow: hidden;
+            font-family: 'Orbitron', monospace;
+            height: 100vh;
+            cursor: crosshair;
+            background: radial-gradient(ellipse at center, #1a0033 0%, #000000 70%);
+        }
+        
+        .holographic-display {
+            position: absolute;
+            top: 5%;
+            left: 5%;
+            width: 90%;
+            height: 90%;
+            border-radius: 25px;
+            overflow: hidden;
+            transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            transform-style: preserve-3d;
+            z-index: 10;
+            box-shadow: 
+                0 30px 60px rgba(0, 0, 0, 0.6),
+                0 12px 24px rgba(0, 0, 0, 0.4),
+                inset 0 3px 6px rgba(255, 255, 255, 0.15),
+                inset 0 -3px 3px rgba(0, 0, 0, 0.15),
+                0 0 0 3px rgba(0, 255, 255, 0.4),
+                0 0 40px rgba(0, 255, 255, 0.3),
+                0 0 80px rgba(255, 0, 255, 0.2);
+        }
+        
+        .holographic-display:hover {
+            transform: scale(1.01) translateZ(20px);
+            box-shadow: 
+                0 40px 80px rgba(0, 0, 0, 0.7),
+                0 16px 32px rgba(0, 0, 0, 0.5),
+                inset 0 4px 8px rgba(255, 255, 255, 0.2),
+                inset 0 -4px 4px rgba(0, 0, 0, 0.2),
+                0 0 0 4px rgba(0, 255, 255, 0.6),
+                0 0 60px rgba(0, 255, 255, 0.4),
+                0 0 120px rgba(255, 0, 255, 0.3);
+        }
+        
+        .control-panel {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: linear-gradient(135deg,
+                rgba(0, 0, 0, 0.95) 0%,
+                rgba(25, 0, 50, 0.9) 100%
+            );
+            padding: 25px;
+            border-radius: 20px;
+            border: 2px solid #00ffff;
+            font-family: 'Orbitron', monospace;
+            z-index: 2500;
+            backdrop-filter: blur(30px);
+            box-shadow: 
+                0 20px 40px rgba(0, 0, 0, 0.8),
+                inset 0 2px 4px rgba(255, 255, 255, 0.1),
+                0 0 0 1px rgba(0, 255, 255, 0.3),
+                0 0 30px rgba(0, 255, 255, 0.2);
+            min-width: 300px;
+        }
+        
+        .system-title {
+            color: #00ffff;
+            font-size: 1.1rem;
+            text-align: center;
+            margin-bottom: 20px;
+            text-shadow: 0 0 15px rgba(0, 255, 255, 0.8);
+            letter-spacing: 2px;
+        }
+        
+        .variant-display {
+            text-align: center;
+            margin-bottom: 20px;
+            color: #00ffff;
+            font-size: 0.9rem;
+        }
+        
+        .variant-number {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: #ffffff;
+            text-shadow: 0 0 20px rgba(0, 255, 255, 0.8);
+            margin: 10px 0;
+        }
+        
+        .geometry-info {
+            background: rgba(0, 255, 255, 0.1);
+            border: 1px solid rgba(0, 255, 255, 0.3);
+            border-radius: 10px;
+            padding: 15px;
+            margin: 15px 0;
+        }
+        
+        .geometry-name {
+            color: #ffffff;
+            font-size: 0.9rem;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        
+        .geometry-mix {
+            font-size: 0.7rem;
+            color: rgba(255, 255, 255, 0.7);
+            line-height: 1.4;
+        }
+        
+        .layer-status {
+            background: rgba(255, 0, 255, 0.1);
+            border: 1px solid rgba(255, 0, 255, 0.3);
+            border-radius: 10px;
+            padding: 15px;
+            margin: 15px 0;
+        }
+        
+        .layer-title {
+            color: #ff00ff;
+            font-size: 0.8rem;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        
+        .layer-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 5px;
+        }
+        
+        .layer-indicator {
+            width: 100%;
+            height: 20px;
+            border-radius: 3px;
+            background: linear-gradient(45deg, #333, #666);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .layer-indicator::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(45deg, 
+                rgba(0, 255, 255, 0.8), 
+                rgba(255, 0, 255, 0.8)
+            );
+            animation: layerPulse 2s ease-in-out infinite;
+            animation-delay: calc(var(--layer-index) * 0.1s);
+        }
+        
+        @keyframes layerPulse {
+            0%, 100% { opacity: 0.3; transform: scaleX(0.5); }
+            50% { opacity: 1; transform: scaleX(1); }
+        }
+        
+        .control-buttons {
+            display: flex;
+            gap: 10px;
+            margin: 15px 0;
+            flex-wrap: wrap;
+        }
+        
+        .control-btn {
+            background: rgba(0, 255, 255, 0.2);
+            border: 1px solid #00ffff;
+            color: #00ffff;
+            padding: 10px 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-family: 'Orbitron', monospace;
+            font-size: 0.7rem;
+            transition: all 0.3s ease;
+            flex: 1;
+            min-width: 80px;
+        }
+        
+        .control-btn:hover {
+            background: rgba(0, 255, 255, 0.4);
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.5);
+            transform: translateY(-2px);
+        }
+        
+        .control-btn.advanced {
+            background: rgba(255, 0, 255, 0.2);
+            border-color: #ff00ff;
+            color: #ff00ff;
+        }
+        
+        .control-btn.advanced:hover {
+            background: rgba(255, 0, 255, 0.4);
+            box-shadow: 0 0 20px rgba(255, 0, 255, 0.5);
+        }
+        
+        .parameter-panel {
+            background: rgba(255, 150, 0, 0.1);
+            border: 1px solid rgba(255, 150, 0, 0.3);
+            border-radius: 10px;
+            padding: 15px;
+            margin: 15px 0;
+        }
+        
+        .param-title {
+            color: #ff9600;
+            font-size: 0.8rem;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        
+        .param-row {
+            display: flex;
+            justify-content: space-between;
+            margin: 8px 0;
+            font-size: 0.6rem;
+        }
+        
+        .param-label {
+            color: rgba(255, 255, 255, 0.7);
+        }
+        
+        .param-value {
+            color: #ffffff;
+            font-weight: bold;
+        }
+        
+        .stats-footer {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 0.6rem;
+            color: rgba(255, 255, 255, 0.5);
+            line-height: 1.4;
+        }
+        
+        @media (max-width: 768px) {
+            .control-panel {
+                top: 10px;
+                right: 10px;
+                left: 10px;
+                padding: 20px;
+                min-width: auto;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="holographic-display" id="holographicDisplay">
+        <!-- 10 canvas layers will be dynamically created here -->
+    </div>
+    
+    <div class="control-panel">
+        <div class="system-title">🌌 ADVANCED HOLOGRAPHIC SYSTEMS</div>
+        
+        <div class="variant-display">
+            <div>10-LAYER MULTI-GEOMETRY</div>
+            <div class="variant-number" id="variantNumber">01</div>
+        </div>
+        
+        <div class="geometry-info">
+            <div class="geometry-name" id="geometryName">TETRAHEDRON COMPLEX</div>
+            <div class="geometry-mix" id="geometryMix">
+                Primary: TETRAHEDRON<br>
+                Secondary: SPHERE<br>
+                Tertiary: KLEIN BOTTLE
+            </div>
+        </div>
+        
+        <div class="layer-status">
+            <div class="layer-title">🔮 10-LAYER RENDERING STATUS</div>
+            <div class="layer-grid" id="layerGrid">
+                <!-- Layer indicators will be populated here -->
+            </div>
+        </div>
+        
+        <div class="control-buttons">
+            <button class="control-btn" onclick="previousVariant()">◀ PREV</button>
+            <button class="control-btn" onclick="nextVariant()">NEXT ▶</button>
+        </div>
+        
+        <div class="control-buttons">
+            <button class="control-btn" onclick="randomVariant()">🎲 RANDOM</button>
+            <button class="control-btn advanced" onclick="cycleLayers()">🔄 CYCLE</button>
+        </div>
+        
+        <div class="control-buttons">
+            <button class="control-btn advanced" onclick="toggleGeometryMix()">🔀 GEO MIX</button>
+            <button class="control-btn advanced" onclick="enhanceDepth()">📊 DEPTH+</button>
+        </div>
+        
+        <div class="parameter-panel">
+            <div class="param-title">⚙️ ADVANCED PARAMETERS</div>
+            <div class="param-row">
+                <span class="param-label">Layer Separation:</span>
+                <span class="param-value" id="paramLayerSep">0.8</span>
+            </div>
+            <div class="param-row">
+                <span class="param-label">Depth Complexity:</span>
+                <span class="param-value" id="paramDepthComp">1.5</span>
+            </div>
+            <div class="param-row">
+                <span class="param-label">Geometry Blend:</span>
+                <span class="param-value" id="paramGeoBrand">0.4</span>
+            </div>
+            <div class="param-row">
+                <span class="param-label">Hologram Intensity:</span>
+                <span class="param-value" id="paramHoloInt">0.7</span>
+            </div>
+            <div class="param-row">
+                <span class="param-label">Multi-Geo Mix:</span>
+                <span class="param-value" id="paramMultiGeo">0.4</span>
+            </div>
+        </div>
+        
+        <div class="stats-footer">
+            WebGL Contexts: 10 Active<br>
+            Geometries: 3 Simultaneous<br>
+            Rendering: 60 FPS Target
+        </div>
+    </div>
+    
+    <script type="module">
+        import { AdvancedHolographicVisualizer } from './src/core/AdvancedHolographicVisualizer.js';
+        
+        console.log('🌌 Advanced Holographic Systems - 10-Layer Multi-Geometry');
+        
+        let holographicSystem = null;
+        let currentVariant = 0;
+        let maxVariants = 64; // 8 geometries * 8 complexity levels
+        
+        // Geometry names
+        const geometryNames = [
+            'TETRAHEDRON', 'HYPERCUBE', 'SPHERE', 'TORUS', 
+            'KLEIN BOTTLE', 'FRACTAL', 'WAVE', 'CRYSTAL'
+        ];
+        
+        // Initialize system
+        window.addEventListener('load', () => {
+            console.log('🚀 Initializing Advanced 10-Layer System...');
+            
+            const container = document.getElementById('holographicDisplay');
+            holographicSystem = new AdvancedHolographicVisualizer(container, currentVariant);
+            
+            // Set up mouse interaction
+            setupMouseInteraction();
+            
+            // Initialize layer indicators
+            initializeLayerIndicators();
+            
+            // Update display
+            updateDisplay();
+            
+            console.log('✅ Advanced system initialized successfully');
+        });
+        
+        function setupMouseInteraction() {
+            const display = document.getElementById('holographicDisplay');
+            
+            display.addEventListener('mousemove', (e) => {
+                const rect = display.getBoundingClientRect();
+                const x = (e.clientX - rect.left) / rect.width;
+                const y = 1.0 - (e.clientY - rect.top) / rect.height;
+                holographicSystem.updateMouse(x, y, 0.5);
+            });
+            
+            display.addEventListener('mouseenter', () => {
+                holographicSystem.updateMouse(0.5, 0.5, 1.0);
+            });
+            
+            display.addEventListener('mouseleave', () => {
+                holographicSystem.updateMouse(0.5, 0.5, 0.0);
+            });
+            
+            display.addEventListener('click', () => {
+                holographicSystem.updateMouse(0.5, 0.5, 2.0);
+                setTimeout(() => holographicSystem.updateMouse(0.5, 0.5, 0.5), 200);
+            });
+        }
+        
+        function initializeLayerIndicators() {
+            const layerGrid = document.getElementById('layerGrid');
+            for (let i = 0; i < 10; i++) {
+                const indicator = document.createElement('div');
+                indicator.className = 'layer-indicator';
+                indicator.style.setProperty('--layer-index', i);
+                indicator.title = `Layer ${i + 1}`;
+                layerGrid.appendChild(indicator);
+            }
+        }
+        
+        function updateDisplay() {
+            const baseGeometry = currentVariant % 8;
+            const complexityLevel = Math.floor(currentVariant / 8);
+            
+            // Update variant number
+            document.getElementById('variantNumber').textContent = 
+                String(currentVariant + 1).padStart(2, '0');
+            
+            // Update geometry info
+            const primaryGeo = geometryNames[baseGeometry];
+            const secondaryGeo = geometryNames[(baseGeometry + 2) % 8];
+            const tertiaryGeo = geometryNames[(baseGeometry + 5) % 8];
+            
+            document.getElementById('geometryName').textContent = 
+                `${primaryGeo} COMPLEX L${complexityLevel + 1}`;
+            
+            document.getElementById('geometryMix').innerHTML = 
+                `Primary: ${primaryGeo}<br>Secondary: ${secondaryGeo}<br>Tertiary: ${tertiaryGeo}`;
+            
+            // Update parameters
+            const params = holographicSystem.params;
+            document.getElementById('paramLayerSep').textContent = params.layerSeparation.toFixed(2);
+            document.getElementById('paramDepthComp').textContent = params.depthComplexity.toFixed(2);
+            document.getElementById('paramGeoBrand').textContent = params.geometryBlendRate.toFixed(2);
+            document.getElementById('paramHoloInt').textContent = params.hologramIntensity.toFixed(2);
+            document.getElementById('paramMultiGeo').textContent = params.multiGeometryMix.toFixed(2);
+        }
+        
+        // Control functions
+        window.nextVariant = function() {
+            currentVariant = (currentVariant + 1) % maxVariants;
+            holographicSystem.setVariant(currentVariant);
+            updateDisplay();
+        };
+        
+        window.previousVariant = function() {
+            currentVariant = (currentVariant - 1 + maxVariants) % maxVariants;
+            holographicSystem.setVariant(currentVariant);
+            updateDisplay();
+        };
+        
+        window.randomVariant = function() {
+            currentVariant = Math.floor(Math.random() * maxVariants);
+            holographicSystem.setVariant(currentVariant);
+            updateDisplay();
+        };
+        
+        window.cycleLayers = function() {
+            // Animate layer indicators
+            const indicators = document.querySelectorAll('.layer-indicator');
+            indicators.forEach((indicator, index) => {
+                indicator.style.animation = 'none';
+                setTimeout(() => {
+                    indicator.style.animation = `layerPulse 1s ease-in-out infinite`;
+                    indicator.style.animationDelay = `${index * 0.05}s`;
+                }, 10);
+            });
+        };
+        
+        window.toggleGeometryMix = function() {
+            // Cycle through geometry combinations
+            holographicSystem.secondaryGeometry = (holographicSystem.secondaryGeometry + 1) % 8;
+            holographicSystem.tertiaryGeometry = (holographicSystem.tertiaryGeometry + 1) % 8;
+            updateDisplay();
+        };
+        
+        window.enhanceDepth = function() {
+            // Increase depth complexity
+            holographicSystem.params.depthComplexity = 
+                Math.min(holographicSystem.params.depthComplexity + 0.2, 3.0);
+            updateDisplay();
+        };
+        
+        // Resize handling
+        window.addEventListener('resize', () => {
+            if (holographicSystem) {
+                holographicSystem.resize();
+            }
+        });
+        
+    </script>
+</body>
+</html>

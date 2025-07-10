@@ -1,0 +1,32 @@
+{
+  "name": "holographic-systems-advanced",
+  "version": "1.0.0",
+  "description": "Advanced 10-Layer Multi-Geometry Holographic Visualization System",
+  "main": "demo-advanced.html",
+  "scripts": {
+    "start": "python3 -m http.server 8080",
+    "dev": "python3 -m http.server 8080",
+    "serve": "python3 -m http.server 8080"
+  },
+  "keywords": [
+    "holographic",
+    "webgl",
+    "visualization",
+    "3d",
+    "4d",
+    "advanced",
+    "multi-layer",
+    "geometry",
+    "shader"
+  ],
+  "author": "Paul Phillips <phillips.paul.email@gmail.com>",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Domusgpt/holographic-systems-advanced.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Domusgpt/holographic-systems-advanced/issues"
+  },
+  "homepage": "https://github.com/Domusgpt/holographic-systems-advanced#readme"
+}
