@@ -138,15 +138,34 @@ export class AdvancedHolographicVisualizer {
         `);
         gl.compileShader(vertexShader);
         
+        // Check vertex shader compilation
+        if (!gl.getShaderParameter(vertexShader, gl.COMPILE_STATUS)) {
+            console.error('Vertex shader compilation failed:', gl.getShaderInfoLog(vertexShader));
+            return;
+        }
+        
         // Advanced fragment shader with 10-layer multi-geometry system
         const fragmentShader = gl.createShader(gl.FRAGMENT_SHADER);
         gl.shaderSource(fragmentShader, this.getAdvancedFragmentShader(layerName));
         gl.compileShader(fragmentShader);
         
+        // Check fragment shader compilation
+        if (!gl.getShaderParameter(fragmentShader, gl.COMPILE_STATUS)) {
+            console.error('Fragment shader compilation failed:', gl.getShaderInfoLog(fragmentShader));
+            return;
+        }
+        
         const program = gl.createProgram();
         gl.attachShader(program, vertexShader);
         gl.attachShader(program, fragmentShader);
         gl.linkProgram(program);
+        
+        // Check program linking
+        if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+            console.error('Program linking failed:', gl.getProgramInfoLog(program));
+            return;
+        }
+        
         gl.useProgram(program);
         
         // Store program and uniforms
@@ -273,6 +292,13 @@ export class AdvancedHolographicVisualizer {
                 else return sdCrystal(p, scale);
             }
             
+            // HSV to RGB conversion
+            vec3 hsv2rgb(vec3 c) {
+                vec4 K = vec4(1.0, 2.0 / 3.0, 1.0 / 3.0, 3.0);
+                vec3 p = abs(fract(c.xxx + K.xyz) * 6.0 - K.www);
+                return c.z * mix(K.xxx, clamp(p - K.xxx, 0.0, 1.0), c.y);
+            }
+            
             // Advanced color mixing with harmonics
             vec3 getHolographicColor(float dist, vec3 pos) {
                 float hue1 = u_hue + sin(u_time * 0.5) * 30.0;
@@ -290,12 +316,6 @@ export class AdvancedHolographicVisualizer {
                 mixed = mix(mixed, color3, mixer2 * 0.3);
                 
                 return mixed;
-            }
-            
-            vec3 hsv2rgb(vec3 c) {
-                vec4 K = vec4(1.0, 2.0 / 3.0, 1.0 / 3.0, 3.0);
-                vec3 p = abs(fract(c.xxx + K.xyz) * 6.0 - K.www);
-                return c.z * mix(K.xxx, clamp(p - K.xxx, 0.0, 1.0), c.y);
             }
             
             void main() {
