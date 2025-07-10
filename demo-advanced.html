@@ -264,7 +264,7 @@
         <div class="system-title">🌌 ADVANCED HOLOGRAPHIC SYSTEMS</div>
         
         <div class="variant-display">
-            <div>10-LAYER MULTI-GEOMETRY</div>
+            <div>8-LAYER MULTI-GEOMETRY</div>
             <div class="variant-number" id="variantNumber">01</div>
         </div>
         
@@ -278,7 +278,7 @@
         </div>
         
         <div class="layer-status">
-            <div class="layer-title">🔮 10-LAYER RENDERING STATUS</div>
+            <div class="layer-title">🔮 8-LAYER RENDERING STATUS</div>
             <div class="layer-grid" id="layerGrid">
                 <!-- Layer indicators will be populated here -->
             </div>
@@ -324,7 +324,7 @@
         </div>
         
         <div class="stats-footer">
-            WebGL Contexts: 10 Active<br>
+            WebGL Contexts: 8 Active<br>
             Geometries: 3 Simultaneous<br>
             Rendering: 60 FPS Target
         </div>
@@ -390,7 +390,7 @@
         
         function initializeLayerIndicators() {
             const layerGrid = document.getElementById('layerGrid');
-            for (let i = 0; i < 10; i++) {
+            for (let i = 0; i < 8; i++) {
                 const indicator = document.createElement('div');
                 indicator.className = 'layer-indicator';
                 indicator.style.setProperty('--layer-index', i);

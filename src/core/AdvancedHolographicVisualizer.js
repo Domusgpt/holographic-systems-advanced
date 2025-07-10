@@ -9,17 +9,15 @@ export class AdvancedHolographicVisualizer {
         this.canvases = {};
         this.contexts = {};
         
-        // 10-Layer Configuration
+        // 8-Layer Configuration (browser-friendly)
         this.layers = [
-            { name: 'deep-background', opacity: 0.1, blend: 'normal', transform: 'scale(1.1)', filter: 'blur(3px)' },
-            { name: 'ambient-field', opacity: 0.15, blend: 'multiply', transform: 'scale(1.05)', filter: 'blur(2px)' },
-            { name: 'shadow-depth', opacity: 0.4, blend: 'multiply', transform: 'translate(3px, 3px)', filter: 'blur(2px) brightness(0.6)' },
-            { name: 'base-geometry', opacity: 0.6, blend: 'normal', transform: 'scale(1.0)', filter: 'none' },
+            { name: 'background-layer', opacity: 0.15, blend: 'normal', transform: 'scale(1.05)', filter: 'blur(2px)' },
+            { name: 'shadow-depth', opacity: 0.4, blend: 'multiply', transform: 'translate(2px, 2px)', filter: 'blur(2px) brightness(0.7)' },
+            { name: 'base-geometry', opacity: 0.7, blend: 'normal', transform: 'scale(1.0)', filter: 'none' },
             { name: 'secondary-geo', opacity: 0.5, blend: 'overlay', transform: 'scale(0.95)', filter: 'none' },
             { name: 'content-layer', opacity: 0.8, blend: 'normal', transform: 'scale(1.0)', filter: 'none' },
-            { name: 'highlight-layer', opacity: 0.3, blend: 'screen', transform: 'translate(-1px, -1px)', filter: 'blur(1px) brightness(1.4)' },
-            { name: 'accent-layer', opacity: 0.25, blend: 'color-dodge', transform: 'scale(1.02)', filter: 'blur(2px)' },
-            { name: 'shimmer-layer', opacity: 0.2, blend: 'soft-light', transform: 'scale(0.98)', filter: 'blur(1px)' },
+            { name: 'highlight-layer', opacity: 0.35, blend: 'screen', transform: 'translate(-1px, -1px)', filter: 'blur(1px) brightness(1.5)' },
+            { name: 'accent-layer', opacity: 0.3, blend: 'color-dodge', transform: 'scale(1.02)', filter: 'blur(2px)' },
             { name: 'hologram-edge', opacity: 0.4, blend: 'screen', transform: 'scale(1.03)', filter: 'blur(1px) brightness(1.6)' }
         ];
         
@@ -45,9 +43,9 @@ export class AdvancedHolographicVisualizer {
         this.tertiaryGeometry = (this.params.primaryGeometry + 5) % 8;
         
         // Layer-specific parameters
-        this.layerRotations = new Array(10).fill(0).map(() => Math.random() * 360);
-        this.layerScales = new Array(10).fill(0).map(() => 0.8 + Math.random() * 0.4);
-        this.layerOffsets = new Array(10).fill(0).map(() => ({ x: (Math.random() - 0.5) * 0.1, y: (Math.random() - 0.5) * 0.1 }));
+        this.layerRotations = new Array(8).fill(0).map(() => Math.random() * 360);
+        this.layerScales = new Array(8).fill(0).map(() => 0.8 + Math.random() * 0.4);
+        this.layerOffsets = new Array(8).fill(0).map(() => ({ x: (Math.random() - 0.5) * 0.1, y: (Math.random() - 0.5) * 0.1 }));
         
         this.initCanvases();
         this.initShaders();
@@ -120,7 +118,13 @@ export class AdvancedHolographicVisualizer {
         Object.keys(this.contexts).forEach(layerName => {
             const gl = this.contexts[layerName];
             if (gl) {
-                this.setupShaderProgram(gl, layerName);
+                try {
+                    this.setupShaderProgram(gl, layerName);
+                } catch (e) {
+                    console.error('Failed to setup shader for layer:', layerName, e);
+                    // Remove failed context to prevent render errors
+                    delete this.contexts[layerName];
+                }
             }
         });
     }
