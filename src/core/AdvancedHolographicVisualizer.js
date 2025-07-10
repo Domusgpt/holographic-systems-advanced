@@ -151,7 +151,9 @@ export class AdvancedHolographicVisualizer {
         
         // Check fragment shader compilation
         if (!gl.getShaderParameter(fragmentShader, gl.COMPILE_STATUS)) {
-            console.error('Fragment shader compilation failed:', gl.getShaderInfoLog(fragmentShader));
+            console.error('Fragment shader compilation failed for layer:', layerName);
+            console.error('Shader error log:', gl.getShaderInfoLog(fragmentShader));
+            console.error('Shader source:', this.getAdvancedFragmentShader(layerName));
             return;
         }
         
@@ -214,6 +216,13 @@ export class AdvancedHolographicVisualizer {
             uniform float u_colorHarmonic2;
             uniform float u_colorHarmonic3;
             
+            // HSV to RGB conversion
+            vec3 hsv2rgb(vec3 c) {
+                vec4 K = vec4(1.0, 2.0 / 3.0, 1.0 / 3.0, 3.0);
+                vec3 p = abs(fract(c.xxx + K.xyz) * 6.0 - K.www);
+                return c.z * mix(K.xxx, clamp(p - K.xxx, 0.0, 1.0), c.y);
+            }
+            
             // Advanced distance functions for multiple geometries
             float sdTetrahedron(vec3 p, float scale) {
                 float d1 = dot(p, normalize(vec3(1.0, 1.0, 1.0))) - scale;
@@ -249,17 +258,17 @@ export class AdvancedHolographicVisualizer {
                 vec3 z = p;
                 float dr = 1.0;
                 float r = 0.0;
-                for (int i = 0; i < 8; i++) {
+                for (int i = 0; i < 4; i++) {
                     r = length(z);
                     if (r > 2.0) break;
                     
-                    float theta = acos(z.z / r);
+                    float theta = acos(clamp(z.z / r, -1.0, 1.0));
                     float phi = atan(z.y, z.x);
-                    dr = pow(r, 7.0) * 8.0 * dr + 1.0;
+                    dr = pow(r, 3.0) * 4.0 * dr + 1.0;
                     
-                    float zr = pow(r, 8.0);
-                    theta = theta * 8.0;
-                    phi = phi * 8.0;
+                    float zr = pow(r, 4.0);
+                    theta = theta * 4.0;
+                    phi = phi * 4.0;
                     
                     z = zr * vec3(sin(theta) * cos(phi), sin(phi) * sin(theta), cos(theta));
                     z += p;
@@ -290,13 +299,6 @@ export class AdvancedHolographicVisualizer {
                 else if (geoType < 5.5) return sdFractal(p, scale);
                 else if (geoType < 6.5) return sdWave(p, scale);
                 else return sdCrystal(p, scale);
-            }
-            
-            // HSV to RGB conversion
-            vec3 hsv2rgb(vec3 c) {
-                vec4 K = vec4(1.0, 2.0 / 3.0, 1.0 / 3.0, 3.0);
-                vec3 p = abs(fract(c.xxx + K.xyz) * 6.0 - K.www);
-                return c.z * mix(K.xxx, clamp(p - K.xxx, 0.0, 1.0), c.y);
             }
             
             // Advanced color mixing with harmonics
@@ -431,43 +433,53 @@ export class AdvancedHolographicVisualizer {
     }
     
     renderLayer(gl, layerName, layerIndex) {
+        // Skip rendering if no valid program
+        if (!gl.program || !gl.uniforms) {
+            return;
+        }
+        
         gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
         gl.clearColor(0, 0, 0, 0);
         gl.clear(gl.COLOR_BUFFER_BIT);
         
         gl.useProgram(gl.program);
         
-        // Set uniforms
+        // Set uniforms safely
         const uniforms = gl.uniforms;
-        gl.uniform1f(uniforms.u_time, this.time);
-        gl.uniform2f(uniforms.u_resolution, gl.canvas.width, gl.canvas.height);
-        gl.uniform2f(uniforms.u_mouse, this.mouseX, this.mouseY);
-        gl.uniform1f(uniforms.u_mouseIntensity, this.mouseIntensity);
-        
-        gl.uniform1f(uniforms.u_primaryGeometry, this.params.primaryGeometry);
-        gl.uniform1f(uniforms.u_secondaryGeometry, this.secondaryGeometry);
-        gl.uniform1f(uniforms.u_tertiaryGeometry, this.tertiaryGeometry);
-        gl.uniform1f(uniforms.u_geometryBlend, this.params.geometryBlendRate);
-        
-        gl.uniform1f(uniforms.u_density, this.params.density);
-        gl.uniform1f(uniforms.u_speed, this.params.speed);
-        gl.uniform1f(uniforms.u_chaos, this.params.chaos);
-        gl.uniform1f(uniforms.u_morph, this.params.morph);
-        gl.uniform1f(uniforms.u_hue, this.params.hue);
-        gl.uniform1f(uniforms.u_saturation, this.params.saturation);
-        gl.uniform1f(uniforms.u_intensity, this.params.intensity);
-        
-        gl.uniform1f(uniforms.u_layerPhase, this.params.layerPhaseShift + layerIndex * 0.5);
-        gl.uniform1f(uniforms.u_depthComplexity, this.params.depthComplexity);
-        gl.uniform1f(uniforms.u_hologramIntensity, this.params.hologramIntensity);
-        
-        gl.uniform1f(uniforms.u_layerRotation, this.layerRotations[layerIndex]);
-        gl.uniform1f(uniforms.u_layerScale, this.layerScales[layerIndex]);
-        gl.uniform2f(uniforms.u_layerOffset, this.layerOffsets[layerIndex].x, this.layerOffsets[layerIndex].y);
-        
-        gl.uniform1f(uniforms.u_colorHarmonic1, this.params.colorHarmonic1);
-        gl.uniform1f(uniforms.u_colorHarmonic2, this.params.colorHarmonic2);
-        gl.uniform1f(uniforms.u_colorHarmonic3, this.params.colorHarmonic3);
+        try {
+            if (uniforms.u_time) gl.uniform1f(uniforms.u_time, this.time);
+            if (uniforms.u_resolution) gl.uniform2f(uniforms.u_resolution, gl.canvas.width, gl.canvas.height);
+            if (uniforms.u_mouse) gl.uniform2f(uniforms.u_mouse, this.mouseX, this.mouseY);
+            if (uniforms.u_mouseIntensity) gl.uniform1f(uniforms.u_mouseIntensity, this.mouseIntensity);
+            
+            if (uniforms.u_primaryGeometry) gl.uniform1f(uniforms.u_primaryGeometry, this.params.primaryGeometry);
+            if (uniforms.u_secondaryGeometry) gl.uniform1f(uniforms.u_secondaryGeometry, this.secondaryGeometry);
+            if (uniforms.u_tertiaryGeometry) gl.uniform1f(uniforms.u_tertiaryGeometry, this.tertiaryGeometry);
+            if (uniforms.u_geometryBlend) gl.uniform1f(uniforms.u_geometryBlend, this.params.geometryBlendRate);
+            
+            if (uniforms.u_density) gl.uniform1f(uniforms.u_density, this.params.density);
+            if (uniforms.u_speed) gl.uniform1f(uniforms.u_speed, this.params.speed);
+            if (uniforms.u_chaos) gl.uniform1f(uniforms.u_chaos, this.params.chaos);
+            if (uniforms.u_morph) gl.uniform1f(uniforms.u_morph, this.params.morph);
+            if (uniforms.u_hue) gl.uniform1f(uniforms.u_hue, this.params.hue);
+            if (uniforms.u_saturation) gl.uniform1f(uniforms.u_saturation, this.params.saturation);
+            if (uniforms.u_intensity) gl.uniform1f(uniforms.u_intensity, this.params.intensity);
+            
+            if (uniforms.u_layerPhase) gl.uniform1f(uniforms.u_layerPhase, this.params.layerPhaseShift + layerIndex * 0.5);
+            if (uniforms.u_depthComplexity) gl.uniform1f(uniforms.u_depthComplexity, this.params.depthComplexity);
+            if (uniforms.u_hologramIntensity) gl.uniform1f(uniforms.u_hologramIntensity, this.params.hologramIntensity);
+            
+            if (uniforms.u_layerRotation) gl.uniform1f(uniforms.u_layerRotation, this.layerRotations[layerIndex]);
+            if (uniforms.u_layerScale) gl.uniform1f(uniforms.u_layerScale, this.layerScales[layerIndex]);
+            if (uniforms.u_layerOffset) gl.uniform2f(uniforms.u_layerOffset, this.layerOffsets[layerIndex].x, this.layerOffsets[layerIndex].y);
+            
+            if (uniforms.u_colorHarmonic1) gl.uniform1f(uniforms.u_colorHarmonic1, this.params.colorHarmonic1);
+            if (uniforms.u_colorHarmonic2) gl.uniform1f(uniforms.u_colorHarmonic2, this.params.colorHarmonic2);
+            if (uniforms.u_colorHarmonic3) gl.uniform1f(uniforms.u_colorHarmonic3, this.params.colorHarmonic3);
+        } catch (e) {
+            console.warn('Error setting uniforms for layer', layerName, e);
+            return;
+        }
         
         // Enable blending
         gl.enable(gl.BLEND);
