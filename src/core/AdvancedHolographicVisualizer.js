@@ -456,18 +456,32 @@ export class AdvancedHolographicVisualizer {
             if (uniforms.u_mouse) gl.uniform2f(uniforms.u_mouse, this.mouseX, this.mouseY);
             if (uniforms.u_mouseIntensity) gl.uniform1f(uniforms.u_mouseIntensity, this.mouseIntensity);
             
-            if (uniforms.u_primaryGeometry) gl.uniform1f(uniforms.u_primaryGeometry, this.params.primaryGeometry);
-            if (uniforms.u_secondaryGeometry) gl.uniform1f(uniforms.u_secondaryGeometry, this.secondaryGeometry);
-            if (uniforms.u_tertiaryGeometry) gl.uniform1f(uniforms.u_tertiaryGeometry, this.tertiaryGeometry);
-            if (uniforms.u_geometryBlend) gl.uniform1f(uniforms.u_geometryBlend, this.params.geometryBlendRate);
+            // Layer-specific geometry selection
+            const layerGeometry = (this.params.primaryGeometry + layerIndex) % 8;
+            const layerSecondary = (layerGeometry + 2 + layerIndex) % 8;
+            const layerTertiary = (layerGeometry + 5 + layerIndex) % 8;
             
-            if (uniforms.u_density) gl.uniform1f(uniforms.u_density, this.params.density);
-            if (uniforms.u_speed) gl.uniform1f(uniforms.u_speed, this.params.speed);
-            if (uniforms.u_chaos) gl.uniform1f(uniforms.u_chaos, this.params.chaos);
-            if (uniforms.u_morph) gl.uniform1f(uniforms.u_morph, this.params.morph);
-            if (uniforms.u_hue) gl.uniform1f(uniforms.u_hue, this.params.hue);
-            if (uniforms.u_saturation) gl.uniform1f(uniforms.u_saturation, this.params.saturation);
-            if (uniforms.u_intensity) gl.uniform1f(uniforms.u_intensity, this.params.intensity);
+            if (uniforms.u_primaryGeometry) gl.uniform1f(uniforms.u_primaryGeometry, layerGeometry);
+            if (uniforms.u_secondaryGeometry) gl.uniform1f(uniforms.u_secondaryGeometry, layerSecondary);
+            if (uniforms.u_tertiaryGeometry) gl.uniform1f(uniforms.u_tertiaryGeometry, layerTertiary);
+            if (uniforms.u_geometryBlend) gl.uniform1f(uniforms.u_geometryBlend, this.params.geometryBlendRate + layerIndex * 0.1);
+            
+            // Layer-specific parameter variations
+            const layerDensity = this.params.density * (0.7 + layerIndex * 0.05);
+            const layerSpeed = this.params.speed * (0.8 + layerIndex * 0.03);
+            const layerChaos = this.params.chaos * (0.5 + layerIndex * 0.08);
+            const layerMorph = this.params.morph * (0.6 + layerIndex * 0.06);
+            const layerHue = (this.params.hue + layerIndex * 45) % 360;
+            const layerSaturation = Math.min(this.params.saturation * (0.8 + layerIndex * 0.04), 1.0);
+            const layerIntensity = this.params.intensity * (0.4 + layerIndex * 0.08);
+            
+            if (uniforms.u_density) gl.uniform1f(uniforms.u_density, layerDensity);
+            if (uniforms.u_speed) gl.uniform1f(uniforms.u_speed, layerSpeed);
+            if (uniforms.u_chaos) gl.uniform1f(uniforms.u_chaos, layerChaos);
+            if (uniforms.u_morph) gl.uniform1f(uniforms.u_morph, layerMorph);
+            if (uniforms.u_hue) gl.uniform1f(uniforms.u_hue, layerHue);
+            if (uniforms.u_saturation) gl.uniform1f(uniforms.u_saturation, layerSaturation);
+            if (uniforms.u_intensity) gl.uniform1f(uniforms.u_intensity, layerIntensity);
             
             if (uniforms.u_layerPhase) gl.uniform1f(uniforms.u_layerPhase, this.params.layerPhaseShift + layerIndex * 0.5);
             if (uniforms.u_depthComplexity) gl.uniform1f(uniforms.u_depthComplexity, this.params.depthComplexity);
@@ -477,9 +491,14 @@ export class AdvancedHolographicVisualizer {
             if (uniforms.u_layerScale) gl.uniform1f(uniforms.u_layerScale, this.layerScales[layerIndex]);
             if (uniforms.u_layerOffset) gl.uniform2f(uniforms.u_layerOffset, this.layerOffsets[layerIndex].x, this.layerOffsets[layerIndex].y);
             
-            if (uniforms.u_colorHarmonic1) gl.uniform1f(uniforms.u_colorHarmonic1, this.params.colorHarmonic1);
-            if (uniforms.u_colorHarmonic2) gl.uniform1f(uniforms.u_colorHarmonic2, this.params.colorHarmonic2);
-            if (uniforms.u_colorHarmonic3) gl.uniform1f(uniforms.u_colorHarmonic3, this.params.colorHarmonic3);
+            // Layer-specific color harmonics
+            const layerHarmonic1 = (this.params.colorHarmonic1 + layerIndex * 60) % 360;
+            const layerHarmonic2 = (this.params.colorHarmonic2 + layerIndex * 80) % 360;
+            const layerHarmonic3 = (this.params.colorHarmonic3 + layerIndex * 100) % 360;
+            
+            if (uniforms.u_colorHarmonic1) gl.uniform1f(uniforms.u_colorHarmonic1, layerHarmonic1);
+            if (uniforms.u_colorHarmonic2) gl.uniform1f(uniforms.u_colorHarmonic2, layerHarmonic2);
+            if (uniforms.u_colorHarmonic3) gl.uniform1f(uniforms.u_colorHarmonic3, layerHarmonic3);
         } catch (e) {
             console.warn('Error setting uniforms for layer', layerName, e);
             return;
